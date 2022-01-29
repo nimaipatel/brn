@@ -208,7 +208,8 @@ main()
 	}
 
 	char tempfile[PATH_MAX];
-	strncpy(tempfile, tempdir, PATH_MAX);
+	/* not using on user provided strings so should be fine */
+	strcpy(tempfile, tempdir);
 	strcat(tempfile, TEMPLATE);
 
 	int fd = mkstemp(tempfile);
