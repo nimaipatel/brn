@@ -69,10 +69,8 @@ flist_from_dir(char *dirname)
 	struct dirent *iter;
 	size_t counter = 0;
 	while ((iter = readdir(dir)) != NULL) {
-		if (strcmp(iter->d_name, ".") == 0)
-			continue;
-		if (strcmp(iter->d_name, "..") == 0)
-			continue;
+		if (strcmp(iter->d_name, ".") == 0) continue;
+		if (strcmp(iter->d_name, "..") == 0) continue;
 
 		if (counter == actual_length) {
 			actual_length *= 2;
@@ -122,10 +120,10 @@ flist_from_lines(char *filename)
 	return r;
 }
 
-void
+bool
 verify(struct flist old, struct flist new)
 {
-	bool abort = false;
+	bool safe = true;
 
 	/* number of files is greater or lesser than number we are renaming */
 	if (old.len != new.len) {
@@ -133,7 +131,7 @@ verify(struct flist old, struct flist new)
 			"[ABORTING] You are renaming %zu files but"
 			" buffer contains %zu file names\n",
 			old.len, new.len);
-		abort = true;
+		safe = false;
 	}
 
 	/* same file name appears more than once */
@@ -144,13 +142,12 @@ verify(struct flist old, struct flist new)
 					"[ABORTING] \"%s\" appears more than"
 					" once in the buffer\n",
 					new.files[i].name);
-				abort = true;
+				safe = false;
 			}
 		}
 	}
 
-	if (abort)
-		exit(1);
+	return safe;
 }
 
 void
@@ -162,15 +159,13 @@ execute(struct flist *old, struct flist *new)
 		char *oldname = old->files[i].name;
 		char *newname = new->files[i].name;
 
-		if (strcmp(oldname, newname) == 0)
-			continue;
+		if (strcmp(oldname, newname) == 0) continue;
 
 		/* Glibc does not  provide  a  wrapper  for  the  renameat2()
 		 * system  call*/
 		int r = syscall(SYS_renameat2, AT_FDCWD, oldname, AT_FDCWD,
 				newname, (1 << 1));
-		if (r < 0)
-			rename(oldname, newname);
+		if (r < 0) rename(oldname, newname);
 
 		for (size_t j = i + 1; j < old->len; ++j) {
 			if (strcmp(old->files[j].name, newname) == 0) {
@@ -187,8 +182,7 @@ main()
 	 * rename */
 
 	char *editor_cmd = getenv("EDITOR");
-	if (!editor_cmd)
-		editor_cmd = getenv("VISUAL");
+	if (!editor_cmd) editor_cmd = getenv("VISUAL");
 	if (!editor_cmd) {
 		fprintf(stderr, "[ERROR] $EDITOR and $VISUAL are"
 				" both not set in the environment\n");
@@ -225,17 +219,19 @@ main()
 
 	struct flist new = flist_from_lines(tempfile);
 
-	verify(old, new);
+	if (verify(old, new)) {
+		execute(&old, &new);
 
-	execute(&old, &new);
+		unlink(tempfile);
+		if (old.files) free(old.files);
+		if (new.files) free(new.files);
 
-	unlink(tempfile);
+		return 0;
+	} else {
+		unlink(tempfile);
+		if (old.files) free(old.files);
+		if (new.files) free(new.files);
 
-	if (old.files)
-		free(old.files);
-
-	if (new.files)
-		free(new.files);
-
-	return 0;
+		exit(1);
+	}
 }
