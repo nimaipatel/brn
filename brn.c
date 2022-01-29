@@ -175,6 +175,7 @@ main(int argc, char *argv[])
 	if (!editor_cmd) {
 		fprintf(stderr,
 			"[ERROR] $EDITOR and $VISUAL are both not set in the environment\n");
+		exit(1);
 	}
 
 	char *tempdir = getenv("TMPDIR");
