@@ -164,6 +164,9 @@ execute(struct flist *old, struct flist *new)
 		char *oldname = old->files[i].name;
 		char *newname = new->files[i].name;
 
+		if (strcmp(oldname, newname) == 0)
+			continue;
+
 		/* Glibc does not  provide  a  wrapper  for  the  renameat2()
 		 * system  call*/
 		int r = syscall(SYS_renameat2, AT_FDCWD, oldname, AT_FDCWD,
