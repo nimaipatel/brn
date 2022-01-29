@@ -11,8 +11,6 @@
 #include <fcntl.h>
 #include <sys/syscall.h>
 
-#define TEMPLATE "/brn.XXXXXX"
-
 /* to store a file name */
 struct fname {
 	char name[NAME_MAX];
@@ -205,7 +203,7 @@ main()
 	char tempfile[PATH_MAX];
 	/* not using on user provided strings so should be fine */
 	strcpy(tempfile, tempdir);
-	strcat(tempfile, TEMPLATE);
+	strcat(tempfile, "/brn.XXXXXX");
 
 	int fd = mkstemp(tempfile);
 	close(fd);
