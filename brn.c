@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _USE_GNU
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <linux/limits.h>
@@ -179,10 +181,8 @@ execute(struct flist *old, struct flist *new)
 
 		if (strcmp(oldname, newname) == 0) continue;
 
-		/* Glibc does not  provide  a  wrapper  for  the  renameat2()
-		 * system  call*/
-		int r = syscall(SYS_renameat2, AT_FDCWD, oldname, AT_FDCWD,
-				newname, (1 << 1));
+		int r = renameat2(AT_FDCWD, oldname, AT_FDCWD, newname,
+				  RENAME_EXCHANGE);
 		if (r < 0) rename(oldname, newname);
 
 		for (size_t j = i + 1; j < old->len; ++j) {
