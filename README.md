@@ -12,7 +12,21 @@ buffer and the changes will take place when you save and exit.
 By default it uses `$EDITOR` and if that is not set then `$VISUAL`.
 
 ## Install
-Clone the repo and `sudo make install`
+
+### Arch Linux Users
+
+You can use the `brn-git` aur package
+
+```
+paru -S brn-git
+```
+
+### Everyone else
+
+Clone the repo and
+```
+sudo make install
+```
 
 ## Why use brn over something like vimv?
 
@@ -30,7 +44,7 @@ Clone the repo and `sudo make install`
 
 ## TODO
 
-- [ ] Make an AUR package.
+- [x] Make an AUR package.
 
 - [x] Version sort directory listing so initial buffer is similar to output of
 `ls -Av`.
