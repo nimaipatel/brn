@@ -9,7 +9,7 @@ When called from inside a directory, it opens a buffer in your default text
 editor with the list of filenames. You can then edit the filenames in the
 buffer and the changes will take place when you save and exit.
 
-By default it uses `$EDITOR` and if that is not set then `$VISUAL`
+By default it uses `$EDITOR` and if that is not set then `$VISUAL`.
 
 ## Why use brn over something like vimv?
 
@@ -23,14 +23,14 @@ By default it uses `$EDITOR` and if that is not set then `$VISUAL`
 * It has error handling, it will safely abort if the exact number of
   filenames isn't provided or if some filenames are repeated.
 
-* It is free
+* It is free.
 
 ## TODO
 
-- [ ] Make an AUR package
+- [ ] Make an AUR package.
 
-- [ ] Version sort directory listing so initial buffer is similar to output of
-`ls -Av`
+- [x] Version sort directory listing so initial buffer is similar to output of
+`ls -Av`.
 
-## LICENSE
-brn uns
+## License
+brn is licensed under the GNU AFFERO GENERAL PUBLIC LICENSE.
