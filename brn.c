@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <fcntl.h>
+#include <sys/syscall.h>
 
 #define TEMPLATE "/brn.XXXXXX"
 
@@ -118,10 +120,11 @@ split_lines(char *filename)
 }
 
 void
-execute(struct flist old, struct flist new)
+verify(struct flist old, struct flist new)
 {
 	bool abort = false;
 
+	/* number of files is greater or lesser than number we are renaming */
 	if (old.len != new.len) {
 		fprintf(stderr,
 			"[ABORTING] You are renaming %zu files but buffer contains %zu file names\n",
@@ -129,6 +132,7 @@ execute(struct flist old, struct flist new)
 		abort = true;
 	}
 
+	/* same file name appears more than once */
 	for (size_t i = 0; i < new.len; ++i) {
 		for (size_t j = i + 1; j < new.len; ++j) {
 			if (strcmp(new.files[i].name, new.files[j].name) == 0) {
@@ -142,27 +146,56 @@ execute(struct flist old, struct flist new)
 
 	if (abort)
 		exit(1);
+}
 
-	bool tempmode = false;
-	for (size_t i = 0; i < new.len; ++i) {
-		for (size_t j = 0; j < old.len; ++j) {
-			if (strcmp(new.files[i].name, old.files[j].name) == 0) {
-				printf("Cycle detected\n");
-				tempmode = true;
-			}
+void
+print_rules(struct flist f, struct flist g)
+{
+	for (size_t i = 0; i < f.len; ++i) {
+		printf("%s", f.files[i].name);
+		printf(" -> ");
+		printf("%s", g.files[i].name);
+		printf("\n");
+	}
+	printf("\n");
+}
+
+void
+replace_in_rules(struct flist *fs, char *old, char *new)
+{
+	for (size_t i = 0; i < fs->len; ++i) {
+		if (strcmp(fs->files[i].name, old) == 0) {
+			strcpy(fs->files[i].name, new);
 		}
 	}
+}
 
-	if (tempmode) {
-	} else {
-		for (size_t i = 0; i < old.len; ++i) {
-			rename(old.files[i].name, new.files[i].name);
+void
+execute(struct flist *old, struct flist *new)
+{
+	size_t len = old->len;
+
+	for (size_t i = 0; i < len; ++i) {
+		print_rules(*old, *new);
+		char *oldname = old->files[i].name;
+		char *newname = new->files[i].name;
+
+		int r = syscall(SYS_renameat2, AT_FDCWD, oldname, AT_FDCWD, newname,
+			(1 << 1));
+		if (r < 0)
+			rename(oldname, newname);
+
+
+		for (size_t j = i + 1; j < old->len; ++j) {
+			if (strcmp(old->files[j].name, newname) == 0) {
+				strcpy(old->files[j].name, oldname);
+			}
 		}
 	}
 }
 
 int
-main(int argc, char *argv[])
+main()
 {
 	/* Usage:
 	 * input can be single directory
@@ -207,7 +240,9 @@ main(int argc, char *argv[])
 
 	struct flist new = split_lines(tempfile);
 
-	execute(old, new);
+	verify(old, new);
+
+	execute(&old, &new);
 
 	unlink(tempfile);
 
