@@ -11,6 +11,9 @@ buffer and the changes will take place when you save and exit.
 
 By default it uses `$EDITOR` and if that is not set then `$VISUAL`.
 
+## Install
+Clone the repo and `sudo make install`
+
 ## Why use brn over something like vimv?
 
 * It can handle swapping names. It uses GNU/Linux's `renameat2` system call to
@@ -31,6 +34,8 @@ By default it uses `$EDITOR` and if that is not set then `$VISUAL`.
 
 - [x] Version sort directory listing so initial buffer is similar to output of
 `ls -Av`.
+
+- [ ] Add an example GIF 
 
 ## License
 brn is licensed under the GNU AFFERO GENERAL PUBLIC LICENSE.
