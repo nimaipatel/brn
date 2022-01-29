@@ -13,15 +13,18 @@
 
 #define TEMPLATE "/brn.XXXXXX"
 
+/* to store a file name */
 struct fname {
 	char name[NAME_MAX];
 };
 
+/* to store list of file names */
 struct flist {
 	struct fname *files;
 	size_t len;
 };
 
+/* execute external command */
 void
 cmd(char **argv)
 {
@@ -49,8 +52,9 @@ cmd(char **argv)
 	}
 }
 
+/* generate flist from contents of directory `dirname` */
 struct flist
-files_in_dir(char *dirname)
+flist_from_dir(char *dirname)
 {
 	DIR *dir = opendir(dirname);
 	if (dir == NULL) {
@@ -89,8 +93,9 @@ files_in_dir(char *dirname)
 	return r;
 }
 
+/* generate flist from new-line separated file names in `filename` */
 struct flist
-split_lines(char *filename)
+flist_from_lines(char *filename)
 {
 	FILE *fptr = fopen(filename, "r");
 	if (!fptr) {
@@ -128,7 +133,7 @@ verify(struct flist old, struct flist new)
 	if (old.len != new.len) {
 		fprintf(stderr,
 			"[ABORTING] You are renaming %zu files but"
-			"buffer contains %zu file names\n",
+			" buffer contains %zu file names\n",
 			old.len, new.len);
 		abort = true;
 	}
@@ -139,7 +144,7 @@ verify(struct flist old, struct flist new)
 			if (strcmp(new.files[i].name, new.files[j].name) == 0) {
 				fprintf(stderr,
 					"[ABORTING] \"%s\" appears more than"
-					"once in the buffer\n",
+					" once in the buffer\n",
 					new.files[i].name);
 				abort = true;
 			}
@@ -197,8 +202,8 @@ main()
 	if (!editor_cmd)
 		editor_cmd = getenv("VISUAL");
 	if (!editor_cmd) {
-		fprintf(stderr,
-			"[ERROR] $EDITOR and $VISUAL are both not set in the environment\n");
+		fprintf(stderr, "[ERROR] $EDITOR and $VISUAL are"
+				" both not set in the environment\n");
 		exit(1);
 	}
 
@@ -215,7 +220,7 @@ main()
 	int fd = mkstemp(tempfile);
 	close(fd);
 
-	struct flist old = files_in_dir(".");
+	struct flist old = flist_from_dir(".");
 
 	FILE *fptr = fopen(tempfile, "r+");
 	if (!fptr) {
@@ -230,7 +235,7 @@ main()
 	char *args[] = { editor_cmd, tempfile, NULL };
 	cmd(args);
 
-	struct flist new = split_lines(tempfile);
+	struct flist new = flist_from_lines(tempfile);
 
 	verify(old, new);
 
