@@ -127,7 +127,8 @@ verify(struct flist old, struct flist new)
 	/* number of files is greater or lesser than number we are renaming */
 	if (old.len != new.len) {
 		fprintf(stderr,
-			"[ABORTING] You are renaming %zu files but buffer contains %zu file names\n",
+			"[ABORTING] You are renaming %zu files but"
+			"buffer contains %zu file names\n",
 			old.len, new.len);
 		abort = true;
 	}
@@ -137,7 +138,8 @@ verify(struct flist old, struct flist new)
 		for (size_t j = i + 1; j < new.len; ++j) {
 			if (strcmp(new.files[i].name, new.files[j].name) == 0) {
 				fprintf(stderr,
-					"[ABORTING] \"%s\" appears more than once in the buffer\n",
+					"[ABORTING] \"%s\" appears more than"
+					"once in the buffer\n",
 					new.files[i].name);
 				abort = true;
 			}
@@ -161,16 +163,6 @@ print_rules(struct flist f, struct flist g)
 }
 
 void
-replace_in_rules(struct flist *fs, char *old, char *new)
-{
-	for (size_t i = 0; i < fs->len; ++i) {
-		if (strcmp(fs->files[i].name, old) == 0) {
-			strcpy(fs->files[i].name, new);
-		}
-	}
-}
-
-void
 execute(struct flist *old, struct flist *new)
 {
 	size_t len = old->len;
@@ -180,11 +172,12 @@ execute(struct flist *old, struct flist *new)
 		char *oldname = old->files[i].name;
 		char *newname = new->files[i].name;
 
-		int r = syscall(SYS_renameat2, AT_FDCWD, oldname, AT_FDCWD, newname,
-			(1 << 1));
+		/* Glibc does not  provide  a  wrapper  for  the  renameat2()
+		 * system  call*/
+		int r = syscall(SYS_renameat2, AT_FDCWD, oldname, AT_FDCWD,
+				newname, (1 << 1));
 		if (r < 0)
 			rename(oldname, newname);
-
 
 		for (size_t j = i + 1; j < old->len; ++j) {
 			if (strcmp(old->files[j].name, newname) == 0) {
@@ -197,10 +190,8 @@ execute(struct flist *old, struct flist *new)
 int
 main()
 {
-	/* Usage:
-	 * input can be single directory
-	 * input can be individual file names
-	 */
+	/* Usage: call in directory which contains files which you want to
+	 * rename */
 
 	char *editor_cmd = getenv("EDITOR");
 	if (!editor_cmd)
