@@ -156,24 +156,11 @@ verify(struct flist old, struct flist new)
 }
 
 void
-print_rules(struct flist f, struct flist g)
-{
-	for (size_t i = 0; i < f.len; ++i) {
-		printf("%s", f.files[i].name);
-		printf(" -> ");
-		printf("%s", g.files[i].name);
-		printf("\n");
-	}
-	printf("\n");
-}
-
-void
 execute(struct flist *old, struct flist *new)
 {
 	size_t len = old->len;
 
 	for (size_t i = 0; i < len; ++i) {
-		print_rules(*old, *new);
 		char *oldname = old->files[i].name;
 		char *newname = new->files[i].name;
 
