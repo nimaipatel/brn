@@ -70,41 +70,33 @@ cmd(char **argv)
 	}
 }
 
-/* generate flist from contents of directory `dirname` */
 struct flist
 flist_from_dir(char *dirname)
 {
-	DIR *dir = opendir(dirname);
-	if (dir == NULL) {
-		fprintf(stderr, "[ERROR] could not open directory %s\n",
+	struct dirent **namelist;
+	int n = scandir(dirname, &namelist, NULL, versionsort);
+	if (n < 0) {
+		fprintf(stderr, "[ERROR] could not scan directory %s\n",
 			dirname);
 		exit(1);
 	}
 
 	struct flist r;
 
-	size_t actual_length = 100;
-	r.files = malloc(sizeof(struct fname) * actual_length);
+	r.files = malloc(sizeof(struct fname) * (n - 2));
 
-	struct dirent *iter;
 	size_t counter = 0;
-	while ((iter = readdir(dir)) != NULL) {
-		if (strcmp(iter->d_name, ".") == 0) continue;
-		if (strcmp(iter->d_name, "..") == 0) continue;
+	for (int i = 0; i < n; ++i) {
+		if (strcmp(namelist[i]->d_name, ".") == 0) continue;
+		if (strcmp(namelist[i]->d_name, "..") == 0) continue;
 
-		if (counter == actual_length) {
-			actual_length *= 2;
-			r.files = realloc(r.files,
-					  sizeof(struct fname) * actual_length);
-		}
-
-		strcpy(r.files[counter].name, iter->d_name);
+		strcpy(r.files[counter].name, namelist[i]->d_name);
 		counter++;
+
+		free(namelist[i]);
 	}
-
-	r.len = counter;
-
-	closedir(dir);
+	free(namelist);
+	r.len = n - 2;
 
 	return r;
 }
