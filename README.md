@@ -42,6 +42,10 @@ sudo make install
 
 * It is free.
 
+## Screencast
+
+![example gif](brn-example.gif "renaming files with brn")
+
 ## TODO
 
 - [x] Make an AUR package.
@@ -49,7 +53,7 @@ sudo make install
 - [x] Version sort directory listing so initial buffer is similar to output of
 `ls -Av`.
 
-- [ ] Add an example GIF 
+- [x] Add an example GIF 
 
 ## License
 brn is licensed under the GNU AFFERO GENERAL PUBLIC LICENSE.
