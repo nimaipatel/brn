@@ -162,24 +162,26 @@ verify(struct flist old, struct flist new)
 	return safe;
 }
 
+size_t
+get_num_renames(struct flist old, struct flist new)
+{
+	size_t num = 0;
+	for (size_t i = 0; i < old.len; ++i) {
+		if (strcmp(old.files[i].name, new.files[i].name) != 0) ++num;
+	}
+	return num;
+}
+
 void
 execute(struct flist *old, struct flist *new)
 {
 	size_t len = old->len;
 
-	/* Keep track of number of renamed files. Intialize to `len` and
-	 * subtract 1 when no rename takes place in the loop
-	 */
-	size_t num_renamed = len;
-
 	for (size_t i = 0; i < len; ++i) {
 		char *oldname = old->files[i].name;
 		char *newname = new->files[i].name;
 
-		if (strcmp(oldname, newname) == 0) {
-			num_renamed--;
-			continue;
-		}
+		if (strcmp(oldname, newname) == 0) continue;
 
 		int r = renameat2(AT_FDCWD, oldname, AT_FDCWD, newname,
 				  RENAME_EXCHANGE);
@@ -191,8 +193,6 @@ execute(struct flist *old, struct flist *new)
 			}
 		}
 	}
-
-	printf("[SUCCESS] Renamed %zu files\n", num_renamed);
 }
 
 int
@@ -240,6 +240,8 @@ main()
 	struct flist new = flist_from_lines(tempfile);
 
 	if (verify(old, new)) {
+		size_t n_renames = get_num_renames(old, new);
+		printf("[SUCCESS] %zu files renamed\n", n_renames);
 		execute(&old, &new);
 
 		unlink(tempfile);
