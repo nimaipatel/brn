@@ -112,8 +112,14 @@ flist_from_lines(char *filename)
 
 	struct flist r;
 
-	size_t actual_length = 100;
-	r.files = malloc(sizeof(struct fname) * actual_length);
+	size_t n_lines = 0;
+	char temp_line[NAME_MAX];
+	while (fgets(temp_line, sizeof(temp_line), fptr)) {
+		n_lines++;
+	}
+	fseek(fptr, 0, SEEK_SET);
+
+	r.files = malloc(sizeof(struct fname) * n_lines);
 
 	size_t counter = 0;
 	while (true) {
