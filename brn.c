@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <linux/limits.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <stdint.h>
@@ -30,6 +31,10 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <sys/syscall.h>
+
+#define ANSI_RED "\x1b[31m"
+#define ANSI_GREEN "\x1b[32m"
+#define ANSI_RESET "\x1b[0m"
 
 /* to store a file name */
 struct fname {
@@ -42,6 +47,28 @@ struct flist {
 	size_t len;
 };
 
+void
+print_error(const char *format, ...)
+{
+	va_list args;
+	fprintf(stderr, ANSI_RED);
+	va_start(args, format);
+	vfprintf(stderr, format, args);
+	va_end(args);
+	fprintf(stderr, ANSI_RESET);
+}
+
+void
+print_success(const char *format, ...)
+{
+	va_list args;
+	fprintf(stdout, ANSI_GREEN);
+	va_start(args, format);
+	vfprintf(stdout, format, args);
+	va_end(args);
+	fprintf(stdout, ANSI_RESET);
+}
+
 /* execute external command */
 void
 cmd(char **argv)
@@ -50,7 +77,7 @@ cmd(char **argv)
 
 	if (child == 0) {
 		if (execvp(argv[0], argv) < 0) {
-			fprintf(stderr,
+			print_error(
 				"[ERROR]: could not execute the child: %s\n",
 				strerror(errno));
 			exit(1);
@@ -58,14 +85,14 @@ cmd(char **argv)
 	} else if (child > 0) {
 		int wstatus;
 		if (wait(&wstatus) < 0) {
-			fprintf(stderr,
+			print_error(
 				"[ERROR]: could not wait for the forked child: %s\n",
 				strerror(errno));
 			exit(1);
 		}
 	} else {
-		fprintf(stderr, "[ERROR]: could not fork a child: %s\n",
-			strerror(errno));
+		print_error("[ERROR]: could not fork a child: %s\n",
+			    strerror(errno));
 		exit(1);
 	}
 }
@@ -76,8 +103,7 @@ flist_from_dir(char *dirname)
 	struct dirent **namelist;
 	int n = scandir(dirname, &namelist, NULL, versionsort);
 	if (n < 0) {
-		fprintf(stderr, "[ERROR] could not scan directory %s\n",
-			dirname);
+		print_error("[ERROR] could not scan directory %s\n", dirname);
 		exit(1);
 	}
 
@@ -107,7 +133,7 @@ flist_from_lines(char *filename)
 {
 	FILE *fptr = fopen(filename, "r");
 	if (!fptr) {
-		fprintf(stderr, "[ERROR] could not open file %s\n", filename);
+		print_error("[ERROR] could not open file %s\n", filename);
 	}
 
 	struct flist r;
@@ -145,10 +171,9 @@ verify(struct flist old, struct flist new)
 
 	/* number of files is greater or lesser than number we are renaming */
 	if (old.len != new.len) {
-		fprintf(stderr,
-			"[ABORTING] You are renaming %zu files but"
-			" buffer contains %zu file names\n",
-			old.len, new.len);
+		print_error("[ABORTING] You are renaming %zu files but"
+			    " buffer contains %zu file names\n",
+			    old.len, new.len);
 		safe = false;
 	}
 
@@ -156,7 +181,7 @@ verify(struct flist old, struct flist new)
 	for (size_t i = 0; i < new.len; ++i) {
 		for (size_t j = i + 1; j < new.len; ++j) {
 			if (strcmp(new.files[i].name, new.files[j].name) == 0) {
-				fprintf(stderr,
+				print_error(
 					"[ABORTING] \"%s\" appears more than"
 					" once in the buffer\n",
 					new.files[i].name);
@@ -210,8 +235,8 @@ main()
 	char *editor_cmd = getenv("EDITOR");
 	if (!editor_cmd) editor_cmd = getenv("VISUAL");
 	if (!editor_cmd) {
-		fprintf(stderr, "[ERROR] $EDITOR and $VISUAL are"
-				" both not set in the environment\n");
+		print_error("[ERROR] $EDITOR and $VISUAL are"
+			    " both not set in the environment\n");
 		exit(1);
 	}
 
@@ -232,7 +257,7 @@ main()
 
 	FILE *fptr = fopen(tempfile, "r+");
 	if (!fptr) {
-		fprintf(stderr, "[ERROR] could not open file %s\n", tempfile);
+		print_error("[ERROR] could not open file %s\n", tempfile);
 	}
 
 	for (size_t i = 0; i < old.len; ++i) {
@@ -247,7 +272,7 @@ main()
 
 	if (verify(old, new)) {
 		size_t n_renames = get_num_renames(old, new);
-		printf("[SUCCESS] %zu files renamed\n", n_renames);
+		print_success("[SUCCESS] %zu files renamed\n", n_renames);
 		execute(&old, &new);
 
 		unlink(tempfile);
