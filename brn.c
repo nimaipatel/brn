@@ -150,6 +150,10 @@ flist_from_lines(char *filename)
 		size_t len = strlen(r.files[counter].name);
 		r.files[counter].name[len - 1] = '\0';
 		counter++;
+		if (counter > actual_length / 2) {
+			actual_length *= 2;
+			r.files = realloc(r.files, sizeof(struct fname) * actual_length);
+		}
 	}
 	fclose(fptr);
 
